@@ -1,6 +1,7 @@
 package com.rafa.rafaandroidtask;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -9,8 +10,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 
 import com.rafa.rafaandroidtask.adapter.ImageAdapter;
 import com.rafa.rafaandroidtask.util.RequestHelper;
@@ -34,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageButton hotButton;
     private ImageButton userButton;
     private ImageButton topButton;
+    private ProgressBar progress;
 
     private int DARKER_GRAY;
     private int TRANSPARENT;
@@ -66,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
                 if (scrollState == SCROLL_STATE_IDLE) {
                     if (gridView.getLastVisiblePosition() == adapter.getCount() - 1 && !isLoading) {
                         isLoading = true;
+                        progress.setVisibility(View.VISIBLE);
                         page++;
                         RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
                     }
@@ -77,6 +82,17 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String json = jsonArray.get(position).toString();
+                Intent intent = new Intent(MainActivity.this, ShowImageActivity.class);
+                intent.putExtra(ShowImageActivity.JSON_EXTRA, json);
+                startActivity(intent);
+            }
+        });
+
+        progress = (ProgressBar) findViewById(R.id.progress_main);
 
         hotButton = (ImageButton) findViewById(R.id.hot_navigation_main);
         hotButton.setOnClickListener(new View.OnClickListener() {
@@ -84,10 +100,13 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 isLoading = true;
+                progress.setVisibility(View.VISIBLE);
 
                 hotButton.setBackgroundColor(DARKER_GRAY);
                 topButton.setBackgroundColor(TRANSPARENT);
                 userButton.setBackgroundColor(TRANSPARENT);
+
+                isViral.setVisible(false);
 
                 page = 0;
                 section = RequestHelper.SECTION_HOT;
@@ -104,10 +123,13 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 isLoading = true;
+                progress.setVisibility(View.VISIBLE);
 
                 hotButton.setBackgroundColor(TRANSPARENT);
                 topButton.setBackgroundColor(DARKER_GRAY);
                 userButton.setBackgroundColor(TRANSPARENT);
+
+                isViral.setVisible(false);
 
                 page = 0;
                 section = RequestHelper.SECTION_TOP;
@@ -124,10 +146,13 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
 
                 isLoading = true;
+                progress.setVisibility(View.VISIBLE);
 
                 hotButton.setBackgroundColor(TRANSPARENT);
                 topButton.setBackgroundColor(TRANSPARENT);
                 userButton.setBackgroundColor(DARKER_GRAY);
+
+                isViral.setVisible(true);
 
                 page = 0;
                 section = RequestHelper.SECTION_USER;
@@ -145,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
         topButton.setBackgroundColor(TRANSPARENT);
         userButton.setBackgroundColor(TRANSPARENT);
 
+        progress.setVisibility(View.VISIBLE);
         RequestHelper.performRequest(section, String.valueOf(page), true, callback);
 
     }
@@ -156,6 +182,7 @@ public class MainActivity extends AppCompatActivity {
 
         isViral = menu.findItem(R.id.menu_viral_check);
         isViral.setChecked(true);
+        isViral.setVisible(false);
 
         return true;
     }
@@ -169,8 +196,18 @@ public class MainActivity extends AppCompatActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.menu_viral_check) {
+
             boolean isChecked = isViral.isChecked();
             isViral.setChecked(!isChecked);
+
+            page = 0;
+            isLoading = true;
+            progress.setVisibility(View.VISIBLE);
+            jsonArray.clear();
+            adapter.notifyDataSetChanged();
+
+            RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
+
             return true;
         }
 
@@ -182,6 +219,7 @@ public class MainActivity extends AppCompatActivity {
         public void onFailure(Call call, IOException e) {
             e.printStackTrace();
             isLoading = false;
+            progress.setVisibility(View.GONE);
         }
 
         @Override
@@ -205,6 +243,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         adapter.notifyDataSetChanged();
+                        progress.setVisibility(View.GONE);
                     }
                 });
 
