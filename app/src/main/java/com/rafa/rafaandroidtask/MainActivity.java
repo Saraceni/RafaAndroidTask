@@ -41,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private int page = 0;
     private boolean isLoading = true;
 
+    private MenuItem isViral;
+
     private String section = RequestHelper.SECTION_HOT;
 
     @Override
@@ -49,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setTitle("");
         setSupportActionBar(toolbar);
 
         jsonArray = new ArrayList<>();
@@ -60,13 +63,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onScrollStateChanged(AbsListView view, int scrollState) {
 
-                if (scrollState == SCROLL_STATE_IDLE)
-                {
-                    if(gridView.getLastVisiblePosition() == adapter.getCount()-1 && !isLoading)
-                    {
+                if (scrollState == SCROLL_STATE_IDLE) {
+                    if (gridView.getLastVisiblePosition() == adapter.getCount() - 1 && !isLoading) {
                         isLoading = true;
                         page++;
-                        RequestHelper.performRequest(section, String.valueOf(page), true, callback);
+                        RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
                     }
                 }
             }
@@ -93,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
                 jsonArray.clear();
                 adapter.notifyDataSetChanged();
 
-                RequestHelper.performRequest(section, String.valueOf(page), true, callback);
+                RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
             }
         });
 
@@ -113,7 +114,7 @@ public class MainActivity extends AppCompatActivity {
                 jsonArray.clear();
                 adapter.notifyDataSetChanged();
 
-                RequestHelper.performRequest(section, String.valueOf(page), true, callback);
+                RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
             }
         });
 
@@ -133,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
                 jsonArray.clear();
                 adapter.notifyDataSetChanged();
 
-                RequestHelper.performRequest(section, String.valueOf(page), true, callback);
+                RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
             }
         });
 
@@ -152,6 +153,10 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        isViral = menu.findItem(R.id.menu_viral_check);
+        isViral.setChecked(true);
+
         return true;
     }
 
@@ -163,7 +168,9 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if (id == R.id.menu_viral_check) {
+            boolean isChecked = isViral.isChecked();
+            isViral.setChecked(!isChecked);
             return true;
         }
 
