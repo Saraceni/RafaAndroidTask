@@ -11,23 +11,19 @@ import android.widget.TextView;
 
 import com.rafa.rafaandroidtask.R;
 import com.rafa.rafaandroidtask.data.ImgurObject;
-import com.squareup.picasso.Callback;
-import com.squareup.picasso.LruCache;
 import com.squareup.picasso.Picasso;
-
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
 /**
- * Created by rafaelgontijo on 2/13/16.
+ * Created by rafaelgontijo on 3/24/16.
  */
-public class ImageAdapter extends BaseAdapter {
+public class ListAdapter extends BaseAdapter {
 
     private Context mContext;
     private ArrayList<ImgurObject> imgurObjects;
 
-    public ImageAdapter(Context c, ArrayList<ImgurObject> imgurObjects) {
+    public ListAdapter(Context c, ArrayList<ImgurObject> imgurObjects) {
 
         mContext = c;
         this.imgurObjects = imgurObjects;
@@ -54,9 +50,9 @@ public class ImageAdapter extends BaseAdapter {
             holder = new ViewHolder();
             // if it's not recycled, initialize some attributes
             LayoutInflater inflater = ((Activity) mContext).getLayoutInflater();
-            convertView = inflater.inflate(R.layout.grid_adapter, parent, false);
-            holder.picture = (ImageView) convertView.findViewById(R.id.picture_grid_adapter);
-            holder.description = (TextView) convertView.findViewById(R.id.description_grid_adapter);
+            convertView = inflater.inflate(R.layout.list_adapter, parent, false);
+            holder.picture = (ImageView) convertView.findViewById(R.id.image_list_adapter);
+            holder.description = (TextView) convertView.findViewById(R.id.description_list_adapter);
             holder.position = position;
 
             convertView.setTag(holder);

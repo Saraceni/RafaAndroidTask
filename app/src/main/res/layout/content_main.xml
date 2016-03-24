@@ -64,6 +64,15 @@
         android:layout_marginLeft="5dp"
         android:layout_marginRight="5dp"/>
 
+    <ListView
+        android:id="@+id/list.main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/navigation.main"
+        android:layout_marginLeft="5dp"
+        android:layout_marginRight="5dp"
+        android:visibility="gone" />
+
     <ProgressBar
         android:id="@+id/progress_main"
         android:layout_width="wrap_content"

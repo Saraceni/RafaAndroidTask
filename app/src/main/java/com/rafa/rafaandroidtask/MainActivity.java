@@ -1,11 +1,9 @@
 package com.rafa.rafaandroidtask;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -13,13 +11,14 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.ImageButton;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import com.rafa.rafaandroidtask.adapter.ImageAdapter;
+import com.rafa.rafaandroidtask.adapter.ListAdapter;
 import com.rafa.rafaandroidtask.data.ImgurObject;
 import com.rafa.rafaandroidtask.util.Prefs;
 import com.rafa.rafaandroidtask.util.RequestHelper;
-import com.rafa.rafaandroidtask.views.SettingsActivity;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -33,8 +32,12 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final int SETTINGS_ACTIVITY = 3;
+
     private GridView gridView;
+    private ListView listView;
     private ImageAdapter adapter;
+    private ListAdapter listAdapter;
     private ArrayList<ImgurObject> imgurArray;
 
 
@@ -54,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
     private String prefsWindow;
     private String prefsSort;
     private boolean prefsShowViral;
+    private int viewMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +72,39 @@ public class MainActivity extends AppCompatActivity {
 
         imgurArray = new ArrayList<>();
         adapter = new ImageAdapter(this, imgurArray);
+        listAdapter = new ListAdapter(this, imgurArray);
+
+        listView = (ListView) findViewById(R.id.list_main);
+        listView.setAdapter(listAdapter);
+        listView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+
+                if (scrollState == SCROLL_STATE_IDLE) {
+                    if (listView.getLastVisiblePosition() == adapter.getCount() - 1 && !isLoading) {
+                        isLoading = true;
+                        progress.setVisibility(View.VISIBLE);
+                        page++;
+                        RequestHelper.performRequest(section, prefsSort, prefsWindow, String.valueOf(page), prefsShowViral, callback);
+                    }
+                }
+
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+
+            }
+        });
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                ImgurObject imgur = imgurArray.get(position);
+                Intent intent = new Intent(MainActivity.this, ShowImageActivity.class);
+                intent.putExtra(ShowImageActivity.JSON_EXTRA, imgur.getJSONData().toString());
+                startActivity(intent);
+            }
+        });
 
         gridView = (GridView) findViewById(R.id.grid_main);
         gridView.setAdapter(adapter);
@@ -100,6 +137,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        if(viewMode == Prefs.VIEW_MODE_GRID) {
+            listView.setVisibility(View.GONE);
+            gridView.setVisibility(View.VISIBLE);
+        }
+        else {
+            gridView.setVisibility(View.GONE);
+            listView.setVisibility(View.VISIBLE);
+        }
+
         progress = (ProgressBar) findViewById(R.id.progress_main);
 
         hotButton = (ImageButton) findViewById(R.id.hot_navigation_main);
@@ -118,6 +164,7 @@ public class MainActivity extends AppCompatActivity {
                 section = RequestHelper.SECTION_HOT;
                 imgurArray.clear();
                 adapter.notifyDataSetChanged();
+                listAdapter.notifyDataSetChanged();
 
                 RequestHelper.performRequest(section, prefsSort, prefsWindow, String.valueOf(page), prefsShowViral, callback);
             }
@@ -139,6 +186,7 @@ public class MainActivity extends AppCompatActivity {
                 section = RequestHelper.SECTION_TOP;
                 imgurArray.clear();
                 adapter.notifyDataSetChanged();
+                listAdapter.notifyDataSetChanged();
 
                 RequestHelper.performRequest(section, prefsSort, prefsWindow, String.valueOf(page), prefsShowViral, callback);
             }
@@ -160,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
                 section = RequestHelper.SECTION_USER;
                 imgurArray.clear();
                 adapter.notifyDataSetChanged();
+                listAdapter.notifyDataSetChanged();
 
                 RequestHelper.performRequest(section, prefsSort, prefsWindow, String.valueOf(page), prefsShowViral, callback);
             }
@@ -193,10 +242,8 @@ public class MainActivity extends AppCompatActivity {
         int id = item.getItemId();
 
         if(id == R.id.menu_settings) {
-
             Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
-
+            startActivityForResult(intent, SETTINGS_ACTIVITY);
         }
 
         return super.onOptionsItemSelected(item);
@@ -207,7 +254,38 @@ public class MainActivity extends AppCompatActivity {
         prefsShowViral = Prefs.getShowViral(this);
         prefsWindow = Prefs.getWindow(this);
         prefsSort = Prefs.getSort(this);
+        viewMode = Prefs.getViewMode(this);
+    }
 
+    private void refreshData() {
+        updatePrefs();
+        page = 0;
+        imgurArray.clear();
+        adapter.notifyDataSetChanged();
+        listAdapter.notifyDataSetChanged();
+
+        if(viewMode == Prefs.VIEW_MODE_GRID) {
+            listView.setVisibility(View.GONE);
+            gridView.setVisibility(View.VISIBLE);
+        }
+        else {
+            gridView.setVisibility(View.GONE);
+            listView.setVisibility(View.VISIBLE);
+        }
+
+        progress.setVisibility(View.VISIBLE);
+        RequestHelper.performRequest(section, prefsSort, prefsWindow, String.valueOf(page), prefsShowViral, callback);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == SETTINGS_ACTIVITY) {
+
+            if (resultCode == RESULT_OK) {
+                refreshData();
+            }
+        }
     }
 
     Callback callback = new Callback() {
@@ -237,6 +315,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         adapter.notifyDataSetChanged();
+                        listAdapter.notifyDataSetChanged();
                         progress.setVisibility(View.GONE);
                     }
                 });

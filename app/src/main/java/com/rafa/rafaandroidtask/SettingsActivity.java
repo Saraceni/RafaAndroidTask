@@ -1,6 +1,7 @@
-package com.rafa.rafaandroidtask.views;
+package com.rafa.rafaandroidtask;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -59,7 +60,9 @@ public class SettingsActivity extends Activity {
         aboutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO: show about screen
+
+                Intent intent = new Intent(SettingsActivity.this, AboutActivity.class);
+                startActivity(intent);
             }
         });
 

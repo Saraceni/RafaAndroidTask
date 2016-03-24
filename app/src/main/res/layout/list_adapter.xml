@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/image_list_adapter"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:src="@mipmap/imgur_logo"
+        android:scaleType="centerCrop"/>
+
+    <TextView
+        android:id="@+id/description_list_adapter"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:lines="1"
+        android:layout_alignParentBottom="true"
+        android:padding="2dp"
+        android:textColor="@color/colorPrimary"
+        android:alpha="0.75"
+        android:background="@android:color/white"/>
+
+</RelativeLayout>
