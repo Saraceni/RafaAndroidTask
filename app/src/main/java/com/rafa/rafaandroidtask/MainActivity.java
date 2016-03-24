@@ -16,7 +16,10 @@ import android.widget.ImageButton;
 import android.widget.ProgressBar;
 
 import com.rafa.rafaandroidtask.adapter.ImageAdapter;
+import com.rafa.rafaandroidtask.data.ImgurObject;
+import com.rafa.rafaandroidtask.util.Prefs;
 import com.rafa.rafaandroidtask.util.RequestHelper;
+import com.rafa.rafaandroidtask.views.SettingsActivity;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -32,22 +35,25 @@ public class MainActivity extends AppCompatActivity {
 
     private GridView gridView;
     private ImageAdapter adapter;
-    private ArrayList<JSONObject> jsonArray;
+    private ArrayList<ImgurObject> imgurArray;
+
 
     private ImageButton hotButton;
     private ImageButton userButton;
     private ImageButton topButton;
     private ProgressBar progress;
 
-    private int DARKER_GRAY;
-    private int TRANSPARENT;
+    private int DESELECTED_COLOR;
+    private int SELECTED_COLOR;
 
     private int page = 0;
     private boolean isLoading = true;
 
-    private MenuItem isViral;
-
     private String section = RequestHelper.SECTION_HOT;
+
+    private String prefsWindow;
+    private String prefsSort;
+    private boolean prefsShowViral;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,11 +61,13 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle("");
+        toolbar.setTitle("Imgur");
         setSupportActionBar(toolbar);
 
-        jsonArray = new ArrayList<>();
-        adapter = new ImageAdapter(this, jsonArray);
+        updatePrefs();
+
+        imgurArray = new ArrayList<>();
+        adapter = new ImageAdapter(this, imgurArray);
 
         gridView = (GridView) findViewById(R.id.grid_main);
         gridView.setAdapter(adapter);
@@ -72,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
                         isLoading = true;
                         progress.setVisibility(View.VISIBLE);
                         page++;
-                        RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
+                        RequestHelper.performRequest(section, prefsSort, prefsWindow, String.valueOf(page), prefsShowViral, callback);
                     }
                 }
             }
@@ -85,9 +93,9 @@ public class MainActivity extends AppCompatActivity {
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String json = jsonArray.get(position).toString();
+                ImgurObject imgur = imgurArray.get(position);
                 Intent intent = new Intent(MainActivity.this, ShowImageActivity.class);
-                intent.putExtra(ShowImageActivity.JSON_EXTRA, json);
+                intent.putExtra(ShowImageActivity.JSON_EXTRA, imgur.getJSONData().toString());
                 startActivity(intent);
             }
         });
@@ -102,18 +110,16 @@ public class MainActivity extends AppCompatActivity {
                 isLoading = true;
                 progress.setVisibility(View.VISIBLE);
 
-                hotButton.setBackgroundColor(DARKER_GRAY);
-                topButton.setBackgroundColor(TRANSPARENT);
-                userButton.setBackgroundColor(TRANSPARENT);
-
-                isViral.setVisible(false);
+                hotButton.setBackgroundColor(SELECTED_COLOR);
+                topButton.setBackgroundColor(DESELECTED_COLOR);
+                userButton.setBackgroundColor(DESELECTED_COLOR);
 
                 page = 0;
                 section = RequestHelper.SECTION_HOT;
-                jsonArray.clear();
+                imgurArray.clear();
                 adapter.notifyDataSetChanged();
 
-                RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
+                RequestHelper.performRequest(section, prefsSort, prefsWindow, String.valueOf(page), prefsShowViral, callback);
             }
         });
 
@@ -125,18 +131,16 @@ public class MainActivity extends AppCompatActivity {
                 isLoading = true;
                 progress.setVisibility(View.VISIBLE);
 
-                hotButton.setBackgroundColor(TRANSPARENT);
-                topButton.setBackgroundColor(DARKER_GRAY);
-                userButton.setBackgroundColor(TRANSPARENT);
-
-                isViral.setVisible(false);
+                hotButton.setBackgroundColor(DESELECTED_COLOR);
+                topButton.setBackgroundColor(SELECTED_COLOR);
+                userButton.setBackgroundColor(DESELECTED_COLOR);
 
                 page = 0;
                 section = RequestHelper.SECTION_TOP;
-                jsonArray.clear();
+                imgurArray.clear();
                 adapter.notifyDataSetChanged();
 
-                RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
+                RequestHelper.performRequest(section, prefsSort, prefsWindow, String.valueOf(page), prefsShowViral, callback);
             }
         });
 
@@ -148,30 +152,28 @@ public class MainActivity extends AppCompatActivity {
                 isLoading = true;
                 progress.setVisibility(View.VISIBLE);
 
-                hotButton.setBackgroundColor(TRANSPARENT);
-                topButton.setBackgroundColor(TRANSPARENT);
-                userButton.setBackgroundColor(DARKER_GRAY);
-
-                isViral.setVisible(true);
+                hotButton.setBackgroundColor(DESELECTED_COLOR);
+                topButton.setBackgroundColor(DESELECTED_COLOR);
+                userButton.setBackgroundColor(SELECTED_COLOR);
 
                 page = 0;
                 section = RequestHelper.SECTION_USER;
-                jsonArray.clear();
+                imgurArray.clear();
                 adapter.notifyDataSetChanged();
 
-                RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
+                RequestHelper.performRequest(section, prefsSort, prefsWindow, String.valueOf(page), prefsShowViral, callback);
             }
         });
 
-        DARKER_GRAY = getResources().getColor(android.R.color.darker_gray);
-        TRANSPARENT = getResources().getColor(android.R.color.transparent);
+        SELECTED_COLOR = getResources().getColor(R.color.colorPrimary);
+        DESELECTED_COLOR = getResources().getColor(android.R.color.transparent);
 
-        hotButton.setBackgroundColor(DARKER_GRAY);
-        topButton.setBackgroundColor(TRANSPARENT);
-        userButton.setBackgroundColor(TRANSPARENT);
+        hotButton.setBackgroundColor(SELECTED_COLOR);
+        topButton.setBackgroundColor(DESELECTED_COLOR);
+        userButton.setBackgroundColor(DESELECTED_COLOR);
 
         progress.setVisibility(View.VISIBLE);
-        RequestHelper.performRequest(section, String.valueOf(page), true, callback);
+        RequestHelper.performRequest(section, prefsSort, prefsWindow, String.valueOf(page), prefsShowViral, callback);
 
     }
 
@@ -179,10 +181,6 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
-
-        isViral = menu.findItem(R.id.menu_viral_check);
-        isViral.setChecked(true);
-        isViral.setVisible(false);
 
         return true;
     }
@@ -194,24 +192,22 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.menu_viral_check) {
+        if(id == R.id.menu_settings) {
 
-            boolean isChecked = isViral.isChecked();
-            isViral.setChecked(!isChecked);
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
 
-            page = 0;
-            isLoading = true;
-            progress.setVisibility(View.VISIBLE);
-            jsonArray.clear();
-            adapter.notifyDataSetChanged();
-
-            RequestHelper.performRequest(section, String.valueOf(page), isViral.isChecked(), callback);
-
-            return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    private void updatePrefs() {
+
+        prefsShowViral = Prefs.getShowViral(this);
+        prefsWindow = Prefs.getWindow(this);
+        prefsSort = Prefs.getSort(this);
+
     }
 
     Callback callback = new Callback() {
@@ -233,10 +229,8 @@ public class MainActivity extends AppCompatActivity {
                 for(int i = 0; i < data.length(); i++)
                 {
                     JSONObject obj = data.getJSONObject(i);
-                    String link = obj.getString("link");
-                    if(link.endsWith(".gif") || link.endsWith(".png")) {
-                        jsonArray.add(obj);
-                    }
+                    ImgurObject object = new ImgurObject(obj);
+                    imgurArray.add(object);
                 }
 
                 MainActivity.this.runOnUiThread(new Runnable() {
@@ -247,8 +241,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-            } catch(Exception exc)
-            {
+            } catch(Exception exc) {
                 exc.printStackTrace();
             }
 

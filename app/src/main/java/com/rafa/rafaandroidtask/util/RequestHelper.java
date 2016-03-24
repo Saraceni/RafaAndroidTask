@@ -16,9 +16,11 @@ public class RequestHelper {
     public static final String SECTION_TOP = "top";
     public static final String SECTION_USER = "user";
 
-    public static void performRequest(String section, String page, boolean viral, final Callback callback)
+    private static final String API_BASE_URL = "https://api.imgur.com/3/gallery/";
+
+    public static void performRequest(String section, String sort, String window, String page, boolean viral, final Callback callback)
     {
-        String url = "https://api.imgur.com/3/gallery/" + section + "/" + page + "/?";
+        String url = API_BASE_URL + section + "/" + sort + "/" + window + "/" + page + "/?";
         if(viral) { url += "showViral=true"; }
         else { url += "showViral=false"; }
 

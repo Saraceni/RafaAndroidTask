@@ -21,6 +21,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ShowImageActivity" />
+        <activity android:name=".views.SettingsActivity" android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

@@ -1,4 +1,18 @@
 <resources>
     <string name="app_name">RafaAndroidTask</string>
     <string name="action_settings">Settings</string>
+    <string-array name="window_options">
+        <item>all</item>
+        <item>day</item>
+        <item>week</item>
+        <item>month</item>
+        <item>year</item>
+    </string-array>
+    <string-array name="sort_options">
+        <item>viral</item>
+        <item>top</item>
+        <item>time</item>
+        <item>rising</item>
+    </string-array>
+
 </resources>

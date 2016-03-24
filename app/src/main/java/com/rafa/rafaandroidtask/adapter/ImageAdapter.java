@@ -6,11 +6,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.rafa.rafaandroidtask.R;
+import com.rafa.rafaandroidtask.data.ImgurObject;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.LruCache;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONObject;
@@ -23,15 +25,20 @@ import java.util.ArrayList;
 public class ImageAdapter extends BaseAdapter {
 
     private Context mContext;
-    private ArrayList<JSONObject> jsons;
+    //private ArrayList<JSONObject> jsons;
+    private ArrayList<ImgurObject> imgurObjects;
+    private ArrayList<JSONObject> loadingObjects;
 
-    public ImageAdapter(Context c, ArrayList<JSONObject> jsons) {
+    public ImageAdapter(Context c, ArrayList<ImgurObject> imgurObjects) {
+
         mContext = c;
-        this.jsons = jsons;
+        this.imgurObjects = imgurObjects;
+        this.loadingObjects = new ArrayList<>();
+
     }
 
     public int getCount() {
-        return jsons.size();
+        return imgurObjects.size();
     }
 
     public Object getItem(int position) {
@@ -62,15 +69,22 @@ public class ImageAdapter extends BaseAdapter {
         }
 
         try {
-            JSONObject json = jsons.get(position);
-            String link = json.getString("link");
-            Picasso.with(mContext).load(link).into(holder.picture);
-            if(json.has("description") && !json.getString("description").equals("null")){
+            ImgurObject imgur = imgurObjects.get(position);
+            String link = imgur.getLink();
+            if(!imgur.getIsAlbum()) {
+                Picasso.with(mContext).load(link).fit().into(holder.picture);
+            }
+            else {
+                holder.picture.setImageResource(R.mipmap.imgur_logo);
+            }
+
+            String description = imgur.getDescription();
+            if(description != null && !description.equals("null")){
                 holder.description.setVisibility(View.VISIBLE);
-                holder.description.setText(json.getString("description"));
+                holder.description.setText(description);
             } else { holder.description.setVisibility(View.INVISIBLE); }
+
         } catch (Exception exc) { exc.printStackTrace(); holder.description.setVisibility(View.INVISIBLE); }
-        //imageView.setImageResource(mThumbIds[position]);
         return convertView;
 
 
